@@ -27,7 +27,7 @@ class HammingLoss(torch.nn.Module):
 
 
 def main(argv):
-    neighbourhood_fn = "8-grid"
+    neighbourhood_fn = "4-grid"
     solver = get_solver(neighbourhood_fn)
 
     grid_size = [16, 16]
@@ -55,7 +55,9 @@ def main(argv):
 
     def generate_distribution(input_noise_temperature: float = 5.0):
         weights_1 = np.ones(shape=[1] + grid_size, dtype=float)
-        weights_1[0, 1:12, 1:12] = 100
+        weights_1[0, 1:6, 0:12] = 100
+        weights_1[0, 8:12, 1:] = 100
+        weights_1[0, 14, 6:10] = 100
 
         weights_1_tensor = torch.tensor(weights_1)
         weights_1_params = nn.Parameter(weights_1_tensor, requires_grad=True)
@@ -65,7 +67,7 @@ def main(argv):
         y_2_tensor = torch.tensor(y_2_batch.detach().cpu().numpy())
 
         target_distribution = TargetDistribution(alpha=0.0, beta=10.0)
-        noise_distribution = SumOfGammaNoiseDistribution(k=8.0 * 1.3, nb_iterations=100)
+        noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=100)
 
         imle_solver = imle(torch_solver,
                            target_distribution=target_distribution,
@@ -104,7 +106,9 @@ def main(argv):
         generate_distribution(t * 0.1)
 
     fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=100, repeat=True)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=100, repeat=False)
+
+    anim.save('animations/paths.gif', writer='imagemagick', fps=10)
 
     plt.show()
 
