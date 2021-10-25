@@ -62,7 +62,7 @@ def main(argv):
         weights_1_tensor = torch.tensor(weights_1)
         weights_1_params = nn.Parameter(weights_1_tensor, requires_grad=True)
 
-        print(weights_1_params[0])
+        # print(weights_1_params[0])
 
         y_2_tensor = torch.tensor(y_2_batch.detach().cpu().numpy())
 
@@ -82,38 +82,31 @@ def main(argv):
 
         loss.backward()
 
-        # print('WEIGHTS')
-        # print(weights_1)
+        return weights_1, imle_y_tensor, y_2_tensor, weights_1_params
 
-        # print('OUTPUT')
-        # print(imle_y_tensor)
+    def init_fwd():
+        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
 
         sns.set_theme()
         ax = sns.heatmap(imle_y_tensor[0].detach().cpu().numpy())
 
-        ax.set_title(f'Distribution over paths -- input noise temperature: {input_noise_temperature:.2f}')
+        ax.set_title(f'Distribution over paths -- input noise temperature: {0.0:.2f}')
 
-        # plt.show()
-
-        # print('TARGET')
-        # print(y_2_tensor.detach().cpu().numpy())
-
-        # print('GRADIENT')
-        # print(weights_1_params.grad.detach().cpu().numpy())
-
-    def init():
-        generate_distribution(0.0)
-
-    def animate(t):
+    def animate_fwd(t):
         plt.clf()
-        generate_distribution(t * 0.1)
+        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(t * 0.1)
+
+        sns.set_theme()
+        ax = sns.heatmap(imle_y_tensor[0].detach().cpu().numpy())
+
+        ax.set_title(f'Distribution over paths -- input noise temperature: {t * 0.1:.2f}')
 
     fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=80, repeat=False)
+    anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=80, repeat=False)
 
     anim.save('animations/paths.gif', writer='imagemagick', fps=8)
 
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':
