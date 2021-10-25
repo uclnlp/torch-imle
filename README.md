@@ -4,7 +4,7 @@ PyTorch library implementing the I-MLE gradient estimator proposed in the NeurIP
 
 ### Example
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/animations/paths.gif" width=900>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/animations/paths.gif" width=600>
 
 
 ### Reference
