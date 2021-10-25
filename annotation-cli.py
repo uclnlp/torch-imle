@@ -42,8 +42,6 @@ def main(argv):
         weights_1[1:12, 1:12] = 2
 
         weights_2 = np.ones(shape=grid_size, dtype=float)
-        weights_2[1:4, 0] = 0
-        weights_2[3, 0:3] = 0
 
         weights_1_batch = torch.tensor(weights_1).unsqueeze(0)
         weights_2_batch = torch.tensor(weights_2).unsqueeze(0)
@@ -84,6 +82,16 @@ def main(argv):
 
         return weights_1, imle_y_tensor, y_2_tensor, weights_1_params
 
+    weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
+
+    sns.set_theme()
+    ax = sns.heatmap(weights_1[0])
+
+    ax.set_title(f'Map')
+
+    fig = ax.get_figure()
+    fig.savefig("figures/map.png")
+
     def init_fwd():
         weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
 
@@ -104,9 +112,31 @@ def main(argv):
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=80, repeat=False)
 
-    anim.save('animations/paths.gif', writer='imagemagick', fps=8)
+    anim.save('figures/paths.gif', writer='imagemagick', fps=8)
 
-    # plt.show()
+    plt.clf()
+
+    def init_grad():
+        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
+
+        sns.set_theme()
+        ax = sns.heatmap(weights_1_params.grad[0].detach().cpu().numpy())
+
+        ax.set_title(f'Gradient -- input noise temperature: {0.0:.2f}')
+
+    def animate_grad(t):
+        plt.clf()
+        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(t * 0.1)
+
+        sns.set_theme()
+        ax = sns.heatmap(weights_1_params.grad[0].detach().cpu().numpy())
+
+        ax.set_title(f'Gradient -- input noise temperature: {t * 0.1:.2f}')
+
+    fig = plt.figure()
+    anim = animation.FuncAnimation(fig, animate_grad, init_func=init_grad, frames=80, repeat=False)
+
+    anim.save('figures/gradient.gif', writer='imagemagick', fps=8)
 
 
 if __name__ == '__main__':
