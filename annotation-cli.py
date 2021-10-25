@@ -90,6 +90,9 @@ def main(argv):
 
         sns.set_theme()
         ax = sns.heatmap(imle_y_tensor[0].detach().cpu().numpy())
+
+        ax.set_title(f'Distribution over paths -- input noise temperature: {input_noise_temperature:.2f}')
+
         # plt.show()
 
         # print('TARGET')
@@ -106,9 +109,9 @@ def main(argv):
         generate_distribution(t * 0.1)
 
     fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=100, repeat=False)
+    anim = animation.FuncAnimation(fig, animate, init_func=init, frames=80, repeat=False)
 
-    anim.save('animations/paths.gif', writer='imagemagick', fps=10)
+    anim.save('animations/paths.gif', writer='imagemagick', fps=8)
 
     plt.show()
 
