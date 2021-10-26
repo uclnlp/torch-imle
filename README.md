@@ -26,6 +26,8 @@ Here are the gradients of the Hamming loss between the inferred shortest path an
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gradients.gif" width=600>
 
+Note that Minimising the downstream training objective (the Hamming loss between the inferred and the gold paths) using gradient descent will decrease the weights of the cells on the diagonal of the map, while increasing the cost of the paths sampled by the model, pushing the model towards the gold path.
+
 ## Code
 
 Using this library is extremely easy -- see [this example](https://github.com/uclnlp/torch-imle/blob/main/annotation-cli.py) as a reference. Assuming we have a method that implements a black-box combinatorial solver such as Dijkstra's algorithm:
