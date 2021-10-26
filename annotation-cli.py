@@ -146,7 +146,7 @@ def main(argv):
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, animate_grad, init_func=init_grad, frames=80, repeat=False)
 
-    anim.save('figures/gradient.gif', writer='imagemagick', fps=8)
+    anim.save('figures/gradients.gif', writer='imagemagick', fps=8)
 
 
 if __name__ == '__main__':
