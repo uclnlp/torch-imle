@@ -22,7 +22,7 @@ Assuming the gold map is actually flat, and this is the gold shortest path:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold.png" width=600>
 
-Here are the gradient of the Hamming loss between the inferred shortest path and the gold one, produced by I-MLE, for updating the map weights:
+Here are the gradients of the Hamming loss between the inferred shortest path and the gold one wrt the map weights, produced by I-MLE, which can be used for learning the optimal map weights:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gradients.gif" width=600>
 
