@@ -45,11 +45,6 @@ def torch_solver(weights_batch: Tensor) -> Tensor:
 We can obtain the corresponding distribution and gradients in this way:
 
 ```python
-import numpy as np
-
-import torch
-from torch import Tensor
-
 from imle.wrapper import imle
 from imle.target import TargetDistribution
 from imle.noise import SumOfGammaNoiseDistribution
