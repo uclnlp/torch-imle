@@ -10,7 +10,7 @@ Implicit MLE (I-MLE) wraps a black-box combinatorial solver, such as Dijkstra's 
 
 Here is what happens when we use a Sum-of-Gamma noise distribution to obtain a distribution over paths, using Dijkstra's algorithm:
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/animations/paths.gif" width=600>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=600>
 
 
 ### Reference
