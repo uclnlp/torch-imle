@@ -31,6 +31,11 @@ Here are the gradients of the Hamming loss between the inferred shortest path an
 Using this library is extremely easy -- see [this example](https://github.com/uclnlp/torch-imle/blob/main/annotation-cli.py) as a reference. Assuming we have a method that implements a black-box combinatorial solver such as Dijkstra's algorithm:
 
 ```python
+import numpy as np
+
+import torch
+from torch import Tensor
+
 def torch_solver(weights_batch: Tensor) -> Tensor:
     weights_batch = weights_batch.detach().cpu().numpy()
     y_batch = np.asarray([solver(w) for w in list(weights_batch)])
@@ -40,8 +45,22 @@ def torch_solver(weights_batch: Tensor) -> Tensor:
 We can obtain the corresponding distribution and gradients in this way:
 
 ```python
+import numpy as np
+
+import torch
+from torch import Tensor
+
+from imle.wrapper import imle
+from imle.target import TargetDistribution
+from imle.noise import SumOfGammaNoiseDistribution
+
 target_distribution = TargetDistribution(alpha=0.0, beta=10.0)
 noise_distribution = SumOfGammaNoiseDistribution(k=k, nb_iterations=100)
+
+def torch_solver(weights_batch: Tensor) -> Tensor:
+    weights_batch = weights_batch.detach().cpu().numpy()
+    y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+    return torch.tensor(y_batch, requires_grad=False)
 
 imle_solver = imle(torch_solver,
                    target_distribution=target_distribution,
