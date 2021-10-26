@@ -2,7 +2,7 @@
 
 PyTorch library implementing the I-MLE gradient estimator proposed in the NeurIPS 2021 paper [Implicit MLE: Backpropagating Through Discrete Exponential Family Distributions.](https://arxiv.org/abs/2106.01798)
 
-# Example
+## Example
 
 Implicit MLE (I-MLE) wraps a black-box combinatorial solver, such as Dijkstra's algorithm, and:
 1. Uses [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) to transform the solver in an exponential family distribution we can sample from, and
@@ -16,8 +16,17 @@ Here is what happens when we use a Sum-of-Gamma noise distribution to obtain a d
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=600>
 
+## Gradients
 
-### Reference
+Assuming the gold map is actually flat, and this is the gold shortest path:
+
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold.png" width=600>
+
+Here are the gradients produced by I-MLE for updating the map weights:
+
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gradients.gif" width=600>
+
+## Reference
 
 ```bibtex
 @inproceedings{niepert21imle,
