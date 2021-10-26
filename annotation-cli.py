@@ -27,7 +27,7 @@ class HammingLoss(torch.nn.Module):
 
 
 def main(argv):
-    neighbourhood_fn = "4-grid"
+    neighbourhood_fn = "8-grid"
     solver = get_solver(neighbourhood_fn)
 
     grid_size = [16, 16]
@@ -40,7 +40,6 @@ def main(argv):
     with torch.inference_mode():
         weights_1 = np.ones(shape=grid_size, dtype=float)
         weights_1[1:12, 1:12] = 2
-
         weights_2 = np.ones(shape=grid_size, dtype=float)
 
         weights_1_batch = torch.tensor(weights_1).unsqueeze(0)
@@ -55,12 +54,10 @@ def main(argv):
         weights_1 = np.ones(shape=[1] + grid_size, dtype=float)
         weights_1[0, 1:6, 0:12] = 100
         weights_1[0, 8:12, 1:] = 100
-        weights_1[0, 14, 6:10] = 100
+        weights_1[0, 14:, 6:10] = 100
 
         weights_1_tensor = torch.tensor(weights_1)
         weights_1_params = nn.Parameter(weights_1_tensor, requires_grad=True)
-
-        # print(weights_1_params[0])
 
         y_2_tensor = torch.tensor(y_2_batch.detach().cpu().numpy())
 
@@ -92,7 +89,19 @@ def main(argv):
     fig = ax.get_figure()
     fig.savefig("figures/map.png")
 
+    plt.clf()
+
+    sns.set_theme()
+    ax = sns.heatmap(y_2_tensor[0].detach().cpu().numpy())
+
+    ax.set_title(f'Gold Path')
+
+    fig = ax.get_figure()
+    fig.savefig("figures/gold.png")
+
+
     def init_fwd():
+        plt.clf()
         weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
 
         sns.set_theme()
@@ -117,6 +126,7 @@ def main(argv):
     plt.clf()
 
     def init_grad():
+        plt.clf()
         weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
 
         sns.set_theme()
