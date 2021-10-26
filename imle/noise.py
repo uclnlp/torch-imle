@@ -26,6 +26,25 @@ class BaseNoiseDistribution(ABC):
 
 
 class SumOfGammaNoiseDistribution(BaseNoiseDistribution):
+    r"""
+    Creates a generator of samples for the Sum-of-Gamma distribution [1], parameterized
+    by :attr:`k`, :attr:`nb_iterations`, and :attr:`device`.
+
+    [1] Mathias Niepert, Pasquale Minervini, Luca Franceschi - Implicit MLE: Backpropagating Through Discrete
+    Exponential Family Distributions. NeurIPS 2021 (https://arxiv.org/abs/2106.01798)
+
+    Example::
+
+        >>> import torch
+        >>> noise_distribution = SumOfGammaNoiseDistribution(k=5, nb_iterations=100)
+        >>> noise_distribution.sample([5])
+        tensor([ 0.2504,  0.0112,  0.5466,  0.0051, -0.1497])
+
+    Args:
+        k (float): k parameter -- see [1] for more details.
+        nb_iterations (int): number of iterations for estimating the sample.
+        device (torch.devicde): device where to store samples.
+    """
     def __init__(self,
                  k: float,
                  nb_iterations: int = 10,

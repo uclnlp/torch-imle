@@ -64,12 +64,17 @@ def main(argv):
         target_distribution = TargetDistribution(alpha=0.0, beta=10.0)
         noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=100)
 
-        imle_solver = imle(torch_solver,
-                           target_distribution=target_distribution,
-                           noise_distribution=noise_distribution,
-                           nb_samples=10,
-                           input_noise_temperature=input_noise_temperature,
-                           target_noise_temperature=5.0)
+        # imle_solver = imle(torch_solver,
+        #                    target_distribution=target_distribution,
+        #                    noise_distribution=noise_distribution,
+        #                    nb_samples=100,
+        #                    input_noise_temperature=input_noise_temperature,
+        #                    target_noise_temperature=5.0)
+
+        @imle(target_distribution=target_distribution, noise_distribution=noise_distribution, nb_samples=100,
+              input_noise_temperature=input_noise_temperature, target_noise_temperature=5.0)
+        def imle_solver(weights_batch: Tensor) -> Tensor:
+            return torch_solver(weights_batch)
 
         imle_y_tensor = imle_solver(weights_1_params)
 

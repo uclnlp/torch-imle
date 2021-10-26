@@ -20,6 +20,20 @@ class BaseTargetDistribution(ABC):
 
 
 class TargetDistribution(BaseTargetDistribution):
+    r"""
+    Creates a generator of target distributions parameterized by :attr:`alpha` and :attr:`beta`.
+
+    Example::
+
+        >>> import torch
+        >>> target_distribution = TargetDistribution(alpha=1.0, beta=1.0)
+        >>> target_distribution.params(theta=torch.tensor([1.0]), dy=torch.tensor([1.0]))
+        tensor([2.])
+
+    Args:
+        alpha (float): weight of the initial distribution parameters theta
+        beta (float): weight of the downstream gradient dy
+    """
     def __init__(self,
                  alpha: float = 1.0,
                  beta: float = 1.0):
