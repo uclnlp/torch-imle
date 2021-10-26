@@ -95,7 +95,7 @@ def imle(function: Callable[[Tensor], Tensor] = None,
                 # [N_SAMPLES, BATCH_SIZE, ..]
                 target_output.view(perturbed_target_input_shape)
 
-                gradient = perturbed_output.mean(0) - target_output.mean(0)
+                gradient = - (perturbed_output.mean(0) - target_output.mean(0))
                 return gradient
 
         return WrappedFunc.apply(input, *args)
