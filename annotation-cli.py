@@ -73,11 +73,10 @@ def main(argv):
         # imle_solver = imle(torch_solver,
         #                    target_distribution=target_distribution,
         #                    noise_distribution=noise_distribution,
-        #                    nb_samples=100,
         #                    input_noise_temperature=input_noise_temperature,
         #                    target_noise_temperature=5.0)
 
-        @imle(target_distribution=target_distribution, noise_distribution=noise_distribution, nb_samples=100,
+        @imle(target_distribution=target_distribution, noise_distribution=noise_distribution,
               input_noise_temperature=input_noise_temperature, target_noise_temperature=5.0)
         def imle_solver(weights_batch: Tensor) -> Tensor:
             return torch_solver(weights_batch)
