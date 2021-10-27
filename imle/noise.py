@@ -37,7 +37,7 @@ class SumOfGammaNoiseDistribution(BaseNoiseDistribution):
 
         >>> import torch
         >>> noise_distribution = SumOfGammaNoiseDistribution(k=5, nb_iterations=100)
-        >>> noise_distribution.sample([5])
+        >>> noise_distribution.sample(torch.Size([5]))
         tensor([ 0.2504,  0.0112,  0.5466,  0.0051, -0.1497])
 
     Args:

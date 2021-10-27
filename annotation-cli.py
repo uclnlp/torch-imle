@@ -33,6 +33,12 @@ def main(argv):
     grid_size = [16, 16]
 
     def torch_solver(weights_batch: Tensor) -> Tensor:
+        r"""
+        Wrapper around the `solver` function, which implements Dijkstra's Shortest Path Algorithm.
+
+        Args:
+            weights_batch (Tensor): PyTorch tensor with shape [BATCH_SIZE, MAP_WIDTH, MAP_HEIGHT]
+        """
         weights_batch = weights_batch.detach().cpu().numpy()
         y_batch = np.asarray([solver(w) for w in list(weights_batch)])
         return torch.tensor(y_batch, requires_grad=False)
