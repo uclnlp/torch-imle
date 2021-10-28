@@ -4,7 +4,7 @@ Concise and self-contained PyTorch library implementing the I-MLE gradient estim
 
 ## Example
 
-Implicit MLE (I-MLE) makes it possible to integrete discrete combinatorial optimization algorithms, such as Dijkstra's algorithm or general integer linear programs, into standard deep learning architectures. The core idea of I-MLE is that it defines an *implicit* maximum likelihood objective whose gradients are used to update upstream parameters of the model. Every instance of I-MLE requires two ingredients:
+Implicit MLE (I-MLE) makes it possible to integrete discrete combinatorial optimization algorithms, such as Dijkstra's algorithm or integer linear program (ILP) solvers, into standard deep learning architectures. The core idea of I-MLE is that it defines an *implicit* maximum likelihood objective whose gradients are used to update upstream parameters of the model. Every instance of I-MLE requires two ingredients:
 1. An ability to approximately sample from a complex and intractable distribution. For this we use [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) (aka the Gumbel-max trick) and propose a novel family of noise perturbations tailored to the problem at hand. 
 2. I-MLE reduces the KL divergence between the current distribution and the empirical distribution. Since in our setting, we do not have access to the empirical distribution and, therefore, have to design surrogate empirical distributions. Here we propose two families of surrogate distributions which are widely applicable and work well in practice. 
 
