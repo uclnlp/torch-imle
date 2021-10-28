@@ -117,7 +117,7 @@ def main(argv):
         weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
         sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0))
+        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0), vmin=0.0, vmax=1.0)
         ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {0}')
 
     def animate_fwd(i):
@@ -126,7 +126,7 @@ def main(argv):
         weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
         sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0))
+        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0), vmin=0.0, vmax=1.0)
         ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {i + 1}')
 
     fig = plt.figure()
@@ -144,17 +144,17 @@ def main(argv):
         weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
         gradients_lst += [weights_params.grad[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(gradients_lst, axis=0))
+        ax = sns.heatmap(np.mean(gradients_lst, axis=0), vmin=-1.0, vmax=1.0)
         ax.set_title(f'Gradient -- temperature 1.0, iteration: {0}')
 
-    def animate_grad(t):
+    def animate_grad(i):
         nonlocal gradients_lst
         plt.clf()
         weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
         gradients_lst += [weights_params.grad[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(gradients_lst, axis=0))
-        ax.set_title(f'Gradient -- temperature 1.0, iteration: {0}')
+        ax = sns.heatmap(np.mean(gradients_lst, axis=0), vmin=-1.0, vmax=1.0)
+        ax.set_title(f'Gradient -- temperature 1.0, iteration: {i + 1}')
 
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, animate_grad, init_func=init_grad, frames=100, repeat=False)
