@@ -13,7 +13,7 @@ In the centre, you can see what happens when we use the proposed sum-of-gamma no
 On the right, you can see the resulting distribution over paths.
 
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=280> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=280> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=280>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=260>
 
 ## Gradients
 
