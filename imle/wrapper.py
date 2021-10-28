@@ -71,11 +71,14 @@ def imle(function: Callable[[Tensor], Tensor] = None,
 
             @staticmethod
             def forward(ctx, input: Tensor, *args):
-                # [BATCH_SIZE, ..]
+                # [BATCH_SIZE, ...]
                 input_shape = input.shape
 
-                # [N_SAMPLES, BATCH_SIZE, ..]
-                perturbed_input_shape = [nb_samples] + list(input_shape)
+                batch_size = input_shape[0]
+                instance_shape = input_shape[1:]
+
+                # [BATCH_SIZE, N_SAMPLES, ...]
+                perturbed_input_shape = [batch_size, nb_samples] + list(instance_shape)
 
                 if noise_distribution is None:
                     noise = torch.zeros(size=perturbed_input_shape)
@@ -84,50 +87,61 @@ def imle(function: Callable[[Tensor], Tensor] = None,
 
                 input_noise = noise * input_noise_temperature
 
-                # [N_SAMPLES, BATCH_SIZE, ..]
-                perturbed_input_3d = input.unsqueeze(0) + input_noise
+                # [BATCH_SIZE, N_SAMPLES, ...]
+                perturbed_input_3d = input.view(batch_size, 1, -1).repeat(1, nb_samples, 1).view(perturbed_input_shape)
+                perturbed_input_3d = perturbed_input_3d + input_noise
 
-                # [N_SAMPLES * BATCH_SIZE, ..]
+                # [BATCH_SIZE * N_SAMPLES, ...]
                 perturbed_input_2d = perturbed_input_3d.view([-1] + perturbed_input_shape[2:])
 
-                # [N_SAMPLES * BATCH_SIZE, ..]
+                # [BATCH_SIZE * N_SAMPLES, ...]
                 perturbed_output = function(perturbed_input_2d)
-                # [N_SAMPLES, BATCH_SIZE, ..]
+                # [BATCH_SIZE, N_SAMPLES, ...]
                 perturbed_output = perturbed_output.view(perturbed_input_shape)
 
                 ctx.save_for_backward(input, noise, perturbed_output)
 
-                # [BATCH_SIZE, ..]
-                res = perturbed_output.mean(0)
+                # [BATCH_SIZE * N_SAMPLES, ...]
+                res = perturbed_output.view([-1] + perturbed_input_shape[2:])
                 return res
 
             @staticmethod
             def backward(ctx, dy):
-                # input: [BATCH_SIZE, ..]
-                # noise: [N_SAMPLES, BATCH_SIZE, ..]
-                # perturbed_output: # [N_SAMPLES, BATCH_SIZE, ..]
-                input, noise, perturbed_output = ctx.saved_variables
+                # input: [BATCH_SIZE, ...]
+                # noise: [BATCH_SIZE, N_SAMPLES, ...]
+                # perturbed_output_3d: # [BATCH_SIZE, N_SAMPLES, ...]
+                input, noise, perturbed_output_3d = ctx.saved_variables
 
-                # [BATCH_SIZE, ..]
-                target_input = target_distribution.params(input, dy)
+                input_shape = input.shape
+                batch_size = input_shape[0]
 
+                # dy is [BATCH_SIZE * N_SAMPLES, ...]
+                dy_shape = dy.shape
+                # noise is [BATCH_SIZE, N_SAMPLES, ...]
+                noise_shape = noise.shape
+
+                # [BATCH_SIZE * NB_SAMPLES, ...]
+                input_2d = input.view(batch_size, 1, -1).repeat(1, nb_samples, 1).view(dy_shape)
+                target_input_2d = target_distribution.params(input_2d, dy)
+                # [BATCH_SIZE, NB_SAMPLES, ...]
+                target_input_3d = target_input_2d.view(noise_shape)
+
+                # [BATCH_SIZE, NB_SAMPLES, ...]
                 target_noise = noise * target_noise_temperature
 
-                # [N_SAMPLES, BATCH_SIZE, ..]
-                perturbed_target_input_3d = target_input.unsqueeze(0) + target_noise
+                # [BATCH_SIZE, N_SAMPLES, ...]
+                perturbed_target_input_3d = target_input_3d + target_noise
 
-                # [N_SAMPLES, BATCH_SIZE, ..]
-                perturbed_target_input_shape = list(perturbed_target_input_3d.shape)
+                # [BATCH_SIZE * N_SAMPLES, ...]
+                perturbed_target_input_2d = perturbed_target_input_3d.view(dy_shape)
 
-                # [N_SAMPLES * BATCH_SIZE, ..]
-                perturbed_target_input_2d = perturbed_target_input_3d.view([-1] + perturbed_target_input_shape[2:])
+                # [BATCH_SIZE * N_SAMPLES, ...]
+                target_output_2d = function(perturbed_target_input_2d)
+                # [BATCH_SIZE, N_SAMPLES, ...]
+                target_output_3d = target_output_2d.view(noise_shape)
 
-                # [N_SAMPLES * BATCH_SIZE, ..]
-                target_output = function(perturbed_target_input_2d)
-                # [N_SAMPLES, BATCH_SIZE, ..]
-                target_output.view(perturbed_target_input_shape)
-
-                gradient = target_output.mean(0) - perturbed_output.mean(0)
+                # [BATCH_SIZE, ...]
+                gradient = (perturbed_output_3d - target_output_3d).mean(axis=1)
                 return gradient
 
         return WrappedFunc.apply(input, *args)

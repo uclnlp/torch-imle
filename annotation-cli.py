@@ -35,37 +35,39 @@ def main(argv):
     def torch_solver(weights_batch: Tensor) -> Tensor:
         r"""
         Wrapper around the `solver` function, which implements Dijkstra's Shortest Path Algorithm.
+        Note that I-MLE assumes that the solver solves a maximisation problem, but here the `solver` function solves
+        a minimisation problem, by finding the path that minimises the total travel cost. As a consequence, here
+        we flip the sign of the weights: `solver` will find the path with minimal total cost, while `torch_solver`
+        will find the path that maximises the total gain (all weights are now negative).
 
         Args:
             weights_batch (Tensor): PyTorch tensor with shape [BATCH_SIZE, MAP_WIDTH, MAP_HEIGHT]
         """
         weights_batch = weights_batch.detach().cpu().numpy()
-        y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+        y_batch = np.asarray([solver(- 1.0 * w) for w in list(weights_batch)])
         return torch.tensor(y_batch, requires_grad=False)
 
     with torch.inference_mode():
-        weights_1 = np.ones(shape=grid_size, dtype=float)
-        weights_1[1:12, 1:12] = 2
-        weights_2 = np.ones(shape=grid_size, dtype=float)
+        weights = np.empty(shape=[1] + grid_size, dtype=float)
+        weights.fill(-1)
 
-        weights_1_batch = torch.tensor(weights_1).unsqueeze(0)
-        weights_2_batch = torch.tensor(weights_2).unsqueeze(0)
-
-        y_1_batch = torch_solver(weights_1_batch)
-        y_2_batch = torch_solver(weights_2_batch)
+        weights_batch = torch.tensor(weights)
+        y_batch = torch_solver(weights_batch)
 
     loss_fn = HammingLoss()
 
     def generate_distribution(input_noise_temperature: float = 5.0):
-        weights_1 = np.ones(shape=[1] + grid_size, dtype=float)
-        weights_1[0, 1:6, 0:12] = 100
-        weights_1[0, 8:12, 1:] = 100
-        weights_1[0, 14:, 6:10] = 100
+        weights = np.empty(shape=[1] + grid_size, dtype=float)
+        weights.fill(-1)
 
-        weights_1_tensor = torch.tensor(weights_1)
-        weights_1_params = nn.Parameter(weights_1_tensor, requires_grad=True)
+        weights[0, 1:6, 0:12] = -100
+        weights[0, 8:12, 1:] = -100
+        weights[0, 14:, 6:10] = -100
 
-        y_2_tensor = torch.tensor(y_2_batch.detach().cpu().numpy())
+        weights_tensor = torch.tensor(weights)
+        weights_params = nn.Parameter(weights_tensor, requires_grad=True)
+
+        y_tensor = torch.tensor(y_batch.detach().cpu().numpy())
 
         target_distribution = TargetDistribution(alpha=0.0, beta=10.0)
         noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=100)
@@ -81,18 +83,16 @@ def main(argv):
         def imle_solver(weights_batch: Tensor) -> Tensor:
             return torch_solver(weights_batch)
 
-        imle_y_tensor = imle_solver(weights_1_params)
-
-        loss = loss_fn(imle_y_tensor, y_2_tensor)
-
+        imle_y_tensor = imle_solver(weights_params)
+        loss = loss_fn(imle_y_tensor, y_tensor)
         loss.backward()
 
-        return weights_1, imle_y_tensor, y_2_tensor, weights_1_params
+        return weights, imle_y_tensor, y_tensor, weights_params
 
-    weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
+    weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(0.0)
 
     sns.set_theme()
-    ax = sns.heatmap(weights_1[0])
+    ax = sns.heatmap(weights[0])
 
     ax.set_title(f'Map')
 
@@ -102,59 +102,62 @@ def main(argv):
     plt.clf()
 
     sns.set_theme()
-    ax = sns.heatmap(y_2_tensor[0].detach().cpu().numpy())
+    ax = sns.heatmap(y_tensor[0].detach().cpu().numpy())
 
     ax.set_title(f'Gold Path')
 
     fig = ax.get_figure()
     fig.savefig("figures/gold.png")
 
+    sampled_paths_lst = []
 
     def init_fwd():
+        nonlocal sampled_paths_lst
         plt.clf()
-        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
-
+        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
+        sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(imle_y_tensor[0].detach().cpu().numpy())
+        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0))
+        ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {0}')
 
-        ax.set_title(f'Distribution over paths -- input noise temperature: {0.0:.2f}')
-
-    def animate_fwd(t):
+    def animate_fwd(i):
+        nonlocal sampled_paths_lst
         plt.clf()
-        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(t * 0.1)
-
+        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
+        sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(imle_y_tensor[0].detach().cpu().numpy())
-
-        ax.set_title(f'Distribution over paths -- input noise temperature: {t * 0.1:.2f}')
+        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0))
+        ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {i + 1}')
 
     fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=80, repeat=False)
+    anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=100, repeat=False)
 
     anim.save('figures/paths.gif', writer='imagemagick', fps=8)
 
     plt.clf()
 
+    gradients_lst = []
+
     def init_grad():
+        nonlocal gradients_lst
         plt.clf()
-        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(0.0)
-
+        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
+        gradients_lst += [weights_params.grad[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(weights_1_params.grad[0].detach().cpu().numpy())
-
-        ax.set_title(f'Gradient -- input noise temperature: {0.0:.2f}')
+        ax = sns.heatmap(np.mean(gradients_lst, axis=0))
+        ax.set_title(f'Gradient -- temperature 1.0, iteration: {0}')
 
     def animate_grad(t):
+        nonlocal gradients_lst
         plt.clf()
-        weights_1, imle_y_tensor, y_2_tensor, weights_1_params = generate_distribution(t * 0.1)
-
+        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
+        gradients_lst += [weights_params.grad[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(weights_1_params.grad[0].detach().cpu().numpy())
-
-        ax.set_title(f'Gradient -- input noise temperature: {t * 0.1:.2f}')
+        ax = sns.heatmap(np.mean(gradients_lst, axis=0))
+        ax.set_title(f'Gradient -- temperature 1.0, iteration: {0}')
 
     fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate_grad, init_func=init_grad, frames=80, repeat=False)
+    anim = animation.FuncAnimation(fig, animate_grad, init_func=init_grad, frames=100, repeat=False)
 
     anim.save('figures/gradients.gif', writer='imagemagick', fps=8)
 
