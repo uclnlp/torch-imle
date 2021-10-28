@@ -12,7 +12,7 @@ Implicit MLE (I-MLE) makes it possible to integrete discrete combinatorial optim
 
 For example, let's consider a map from a simple game where the task is to find the shortest path from the top-left to the bottom-right corner. Black areas have the highest and white areas the lowest cost.
 In the centre, you can see what happens when we use the proposed sum-of-gamma noise distribution to sample paths.
-On the right, you can see the resulting distribution over paths.
+On the right, you can see the resulting marginal probabilities for every tile (the probability of each tile being part of a sampled path).
 
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=260>
