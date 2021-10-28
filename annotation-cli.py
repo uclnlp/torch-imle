@@ -101,38 +101,50 @@ def main(argv):
 
     plt.clf()
 
-    sns.set_theme()
-    ax = sns.heatmap(y_tensor[0].detach().cpu().numpy())
-
-    ax.set_title(f'Gold Path')
-
-    fig = ax.get_figure()
-    fig.savefig("figures/gold.png")
-
     sampled_paths_lst = []
+    for i in range(110):
+        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
+        sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
 
     def init_fwd():
         nonlocal sampled_paths_lst
         plt.clf()
-        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
-        sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0), vmin=0.0, vmax=1.0)
-        ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {0}')
+        ax = sns.heatmap(sampled_paths_lst[0]) #, vmin=0.0, vmax=1.0)
+        ax.set_title(f'Sampled path -- temperature 1.0, iteration: {0}')
 
     def animate_fwd(i):
         nonlocal sampled_paths_lst
         plt.clf()
-        weights, imle_y_tensor, y_tensor, weights_params = generate_distribution(1.0)
-        sampled_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
         sns.set_theme()
-        ax = sns.heatmap(np.mean(sampled_paths_lst, axis=0), vmin=0.0, vmax=1.0)
-        ax.set_title(f'Sampled paths -- temperature 1.0, iteration: {i + 1}')
+        ax = sns.heatmap(sampled_paths_lst[i]) #, vmin=0.0, vmax=1.0)
+        ax.set_title(f'Sampled path -- temperature 1.0, iteration: {i}')
 
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=100, repeat=False)
 
     anim.save('figures/paths.gif', writer='imagemagick', fps=8)
+
+    plt.clf()
+
+    def init_fwd():
+        nonlocal sampled_paths_lst
+        plt.clf()
+        sns.set_theme()
+        ax = sns.heatmap(sampled_paths_lst[0]) #, vmin=0.0, vmax=1.0)
+        ax.set_title(f'Distribution over paths -- temperature 1.0, iteration: {0}')
+
+    def animate_fwd(i):
+        nonlocal sampled_paths_lst
+        plt.clf()
+        sns.set_theme()
+        ax = sns.heatmap(np.mean(sampled_paths_lst[:i + 1], axis=0)) #, vmin=0.0, vmax=1.0)
+        ax.set_title(f'Distribution over paths -- temperature 1.0, iteration: {i}')
+
+    fig = plt.figure()
+    anim = animation.FuncAnimation(fig, animate_fwd, init_func=init_fwd, frames=100, repeat=False)
+
+    anim.save('figures/distribution.gif', writer='imagemagick', fps=8)
 
     plt.clf()
 

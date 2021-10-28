@@ -8,13 +8,13 @@ Implicit MLE (I-MLE) wraps a black-box combinatorial solver, such as Dijkstra's 
 1. Uses [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) to transform the solver in an exponential family distribution we can sample from, and
 2. Following the MLE for exponential family distributions (e.g. see [Murphy's book, Sect. 9.2.4](http://noiselab.ucsd.edu/ECE228/Murphy_Machine_Learning.pdf)), uses the difference between the sufficient statistics of the target distribution and their expectation according to the model to compute the gradient of the log-likelihood.
 
-For example, let's consider this map, and the task is to find the shortest path from the top-left to the bottom-right corner of the map:
+For example, let's consider this map, and the task is to find the shortest path from the top-left to the bottom-right corner of the map.
+In the centre, you can see what happens when we use a Sum-of-Gamma noise distribution over the input weights to sample paths.
+On the right, you can see the resulting distribution over paths.
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=600>
 
-Here is what happens when we use a Sum-of-Gamma noise distribution to obtain a distribution over paths, using Dijkstra's algorithm:
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=300> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=300> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=300>
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=600>
 
 ## Gradients
 
@@ -56,13 +56,13 @@ noise_distribution = SumOfGammaNoiseDistribution(k=k, nb_iterations=100)
 
 def torch_solver(weights_batch: Tensor) -> Tensor:
     weights_batch = weights_batch.detach().cpu().numpy()
-    y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+    y_batch = np.asarray([solver(- w) for w in list(weights_batch)])
     return torch.tensor(y_batch, requires_grad=False)
 
 imle_solver = imle(torch_solver,
                    target_distribution=target_distribution,
                     noise_distribution=noise_distribution,
-                    nb_samples=10,
+                    nb_samples=1,
                     input_noise_temperature=input_noise_temperature,
                     target_noise_temperature=target_noise_temperature)
 ```
@@ -72,7 +72,7 @@ Or, alternatively, using a simple function annotation:
 ```python
 @imle(target_distribution=target_distribution,
       noise_distribution=noise_distribution,
-      nb_samples=10,
+      nb_samples=1,
       input_noise_temperature=input_noise_temperature,
       target_noise_temperature=target_noise_temperature)
 def imle_solver(weights_batch: Tensor) -> Tensor:
