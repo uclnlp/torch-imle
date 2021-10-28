@@ -1,18 +1,18 @@
 # torch-imle
 
-Small and self-contained PyTorch library implementing the I-MLE gradient estimator proposed in the NeurIPS 2021 paper [Implicit MLE: Backpropagating Through Discrete Exponential Family Distributions.](https://arxiv.org/abs/2106.01798)
+Concise and self-contained PyTorch library implementing the I-MLE gradient estimator proposed in the NeurIPS 2021 paper [Implicit MLE: Backpropagating Through Discrete Exponential Family Distributions.](https://arxiv.org/abs/2106.01798)
 
 ## Example
 
-Implicit MLE (I-MLE) wraps a black-box combinatorial solver, such as Dijkstra's algorithm, and:
-1. Uses [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) to transform the solver in an exponential family distribution we can sample from, and
-2. Following the MLE for exponential family distributions (e.g. see [Murphy's book, Sect. 9.2.4](http://noiselab.ucsd.edu/ECE228/Murphy_Machine_Learning.pdf)), uses the difference between the sufficient statistics of the target distribution and their expectation according to the model to compute the gradient of the log-likelihood.
+Implicit MLE (I-MLE) makes it possible to integrete discrete combinatorial optimization algorithms, such as Dijkstra's algorithm or general integer linear programs, into standard deep learning architectures. The core idea of I-MLE is that it defines an *implicit* maximum likelihood objective whose gradients are used to update upstream parameters of the model. Every instance of I-MLE requires two ingredients:
+1. An ability to approximately sample from a complex and intractable distribution. For this we use perturb and MAP [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) (aka the Gumbel-max trick) and propose a novel family of noise perturbations tailored to the problem at hand. 
+2. I-MLE reduces the KL divergence between the current distribution and the empirical distribution. Since in our setting, we do not have access to the empirical distribution and, therefore, have to design surrogate empirical distributions. Here we propose two families of surrogate distributions which are widely applicable and work well in practice. 
 
-For example, let's consider this map, and the task is to find the shortest path from the top-left to the bottom-right corner of the map:
+For example, let's consider a map from a simple game where the task is to find the shortest path from the top-left to the bottom-right corner:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=600>
 
-Here is what happens when we use a Sum-of-Gamma noise distribution to obtain a distribution over paths, using Dijkstra's algorithm:
+Here is what happens when we use the proposed sum-of-gamma noise distribution to obtain a distribution over paths, using Dijkstra's algorithm:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=600>
 
