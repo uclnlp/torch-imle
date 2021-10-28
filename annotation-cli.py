@@ -238,7 +238,7 @@ def learning(argv):
 
         imle_y_tensor = imle_solver(weights_params)
 
-        evolving_weights_lst += [weights_params[0].detach().cpu().numpy()]
+        evolving_weights_lst += [np.copy(weights_params[0].detach().cpu().numpy())]
         evolving_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
 
         loss = loss_fn(imle_y_tensor, true_y)
