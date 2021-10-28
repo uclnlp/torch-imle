@@ -13,19 +13,19 @@ In the centre, you can see what happens when we use the proposed sum-of-gamma no
 On the right, you can see the resulting distribution over paths.
 
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/paths.gif" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/distribution.gif" width=260>
 
 ## Gradients
 
-Assuming the gold map is actually flat, and this is the gold shortest path:
+Let us assume that the optimal shortest path is the one of the left.
+Starting from random weights, the model can learn to produce the weights that will result in the optimal shortest path via Gradient Descent, by minimising the Hamming loss between the produced path and the gold path.
+Here we show the paths being produced during training (middle), and the corresponding map weights (right).
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold.png" width=600>
-
-Here are the gradients of the Hamming loss between the inferred shortest path and the gold one wrt the map weights, produced by I-MLE, which can be used for learning the optimal map weights:
-
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gradients.gif" width=600>
-
-Note that minimising the downstream training objective (the Hamming loss between the inferred and the gold paths) using gradient descent will decrease the weights of the cells on the diagonal of the map, while increasing the cost of the paths sampled by the model, pushing the model towards the gold path.
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold.png" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths.gif" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights.gif" width=260>
 
 ## Code
 

@@ -10,6 +10,9 @@ from imle.target import BaseTargetDistribution, TargetDistribution
 
 from typing import Callable, Optional
 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -112,6 +115,14 @@ def imle(function: Callable[[Tensor], Tensor] = None,
                 # perturbed_output_3d: # [BATCH_SIZE, N_SAMPLES, ...]
                 input, noise, perturbed_output_3d = ctx.saved_variables
 
+                def show(x):
+                    plt.clf()
+                    sns.heatmap(x)  # , vmin=0.0, vmax=1.0)
+                    plt.show()
+
+                # show(input[0].detach().cpu().numpy())
+                # show(dy[0].detach().cpu().numpy())
+
                 input_shape = input.shape
                 batch_size = input_shape[0]
 
@@ -123,6 +134,9 @@ def imle(function: Callable[[Tensor], Tensor] = None,
                 # [BATCH_SIZE * NB_SAMPLES, ...]
                 input_2d = input.view(batch_size, 1, -1).repeat(1, nb_samples, 1).view(dy_shape)
                 target_input_2d = target_distribution.params(input_2d, dy)
+
+                # show(target_input_2d[0].detach().cpu().numpy())
+
                 # [BATCH_SIZE, NB_SAMPLES, ...]
                 target_input_3d = target_input_2d.view(noise_shape)
 

@@ -44,5 +44,5 @@ class TargetDistribution(BaseTargetDistribution):
     def params(self,
                theta: Tensor,
                dy: Tensor) -> Tensor:
-        theta_prime = self.alpha * theta + self.beta * dy
+        theta_prime = self.alpha * theta - self.beta * dy
         return theta_prime
