@@ -209,7 +209,7 @@ def learning(argv):
     sns.set_theme()
     ax = sns.heatmap(true_y[0].cpu().numpy())
 
-    ax.set_title(f'Map')
+    ax.set_title(f'Gold path')
 
     fig = ax.get_figure()
     fig.savefig("figures/gold.png")
@@ -232,7 +232,7 @@ def learning(argv):
         noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=1)
 
         @imle(target_distribution=target_distribution, noise_distribution=noise_distribution,
-              input_noise_temperature=0.1, target_noise_temperature=0.0, nb_samples=1)
+              input_noise_temperature=0.1, target_noise_temperature=0.1, nb_samples=10)
         def imle_solver(weights_batch: Tensor) -> Tensor:
             return torch_solver(weights_batch)
 
@@ -240,10 +240,6 @@ def learning(argv):
 
         evolving_weights_lst += [weights_params[0].detach().cpu().numpy()]
         evolving_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
-
-        # plt.clf()
-        # ax = sns.heatmap(evolving_paths_lst[-1])  # , vmin=0.0, vmax=1.0)
-        # plt.show()
 
         loss = loss_fn(imle_y_tensor, true_y)
 
@@ -253,13 +249,7 @@ def learning(argv):
         optimizer.zero_grad()
         loss.backward()
 
-        # plt.clf()
-        # ax = sns.heatmap(weights_params[0].detach().cpu().numpy())  # , vmin=0.0, vmax=1.0)
-        # plt.show()
-
         optimizer.step()
-
-    # sys.exit(0)
 
     def init_paths():
         nonlocal evolving_paths_lst
@@ -305,5 +295,5 @@ def learning(argv):
 
 
 if __name__ == '__main__':
-    # main(sys.argv[1:])
+    main(sys.argv[1:])
     learning(sys.argv[1:])
