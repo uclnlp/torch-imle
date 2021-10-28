@@ -8,7 +8,7 @@ Implicit MLE (I-MLE) makes it possible to integrete discrete combinatorial optim
 1. An ability to approximately sample from a complex and intractable distribution. For this we use [Perturb-and-MAP](https://home.ttic.edu/~gpapan/research/perturb_and_map/) (aka the Gumbel-max trick) and propose a novel family of noise perturbations tailored to the problem at hand. 
 2. I-MLE reduces the KL divergence between the current distribution and the empirical distribution. Since in our setting, we do not have access to the empirical distribution and, therefore, have to design surrogate empirical distributions. Here we propose two families of surrogate distributions which are widely applicable and work well in practice. 
 
-For example, let's consider a map from a simple game where the task is to find the shortest path from the top-left to the bottom-right corner:
+For example, let's consider a map from a simple game where the task is to find the shortest path from the top-left to the bottom-right corner. Black areas have the highest and white areas the lowest cost. 
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/map.png" width=600>
 
