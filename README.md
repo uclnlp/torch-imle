@@ -27,10 +27,18 @@ Input noise temperature set to `0.0`, and target noise temperature set to `0.0`:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=0.0_tnt=0.0_ns=1.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=0.0_tnt=0.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=0.0_tnt=0.0_ns=100.gif" width=260>
 
-
 Input noise temperature set to `1.0`, and target noise temperature set to `1.0`:
 
 <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=0.0_tnt=0.0_ns=1.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=1.0_tnt=1.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=1.0_tnt=1.0_ns=100.gif" width=260>
+
+Input noise temperature set to `2.0`, and target noise temperature set to `2.0`:
+
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=0.0_tnt=0.0_ns=1.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=2.0_tnt=2.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=2.0_tnt=2.0_ns=100.gif" width=260>
+
+Input noise temperature set to `5.0`, and target noise temperature set to `5.0`:
+
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=0.0_tnt=0.0_ns=1.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=5.0_tnt=5.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=5.0_tnt=5.0_ns=100.gif" width=260>
+
 
 ## Code
 
