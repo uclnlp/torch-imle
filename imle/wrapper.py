@@ -93,6 +93,7 @@ def imle(function: Callable[[Tensor], Tensor] = None,
 
                 # [BATCH_SIZE * N_SAMPLES, ...]
                 perturbed_input_2d = perturbed_input_3d.view([-1] + perturbed_input_shape[2:])
+                perturbed_input_2d_shape = perturbed_input_2d.shape
 
                 # [BATCH_SIZE * N_SAMPLES, ...]
                 perturbed_output = function(perturbed_input_2d)
@@ -102,7 +103,7 @@ def imle(function: Callable[[Tensor], Tensor] = None,
                 ctx.save_for_backward(input, noise, perturbed_output)
 
                 # [BATCH_SIZE * N_SAMPLES, ...]
-                res = perturbed_output.view([-1] + perturbed_input_shape[2:])
+                res = perturbed_output.view(perturbed_input_2d_shape)
                 return res
 
             @staticmethod
@@ -138,11 +139,13 @@ def imle(function: Callable[[Tensor], Tensor] = None,
 
                 # [BATCH_SIZE * N_SAMPLES, ...]
                 target_output_2d = function(perturbed_target_input_2d)
+
                 # [BATCH_SIZE, N_SAMPLES, ...]
                 target_output_3d = target_output_2d.view(noise_shape)
 
                 # [BATCH_SIZE, ...]
-                gradient = (perturbed_output_3d - target_output_3d).mean(axis=1)
+                gradient = (perturbed_output_3d - target_output_3d)
+                gradient = gradient.mean(axis=1)
                 return gradient
 
         return WrappedFunc.apply(input, *args)

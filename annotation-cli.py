@@ -14,10 +14,35 @@ from imle.noise import SumOfGammaNoiseDistribution
 
 from solvers.dijkstra import get_solver
 
+import multiprocessing
+import ray
+import random
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 from matplotlib import animation
+
+
+def set_seed(seed: int, is_deterministic: bool = True):
+    # set the seeds
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        if is_deterministic is True:
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    return
+
+
+def maybe_parallelize(function, arg_list):
+    if ray.is_initialized():
+        ray_fn = ray.remote(function)
+        return ray.get([ray_fn.remote(arg) for arg in arg_list])
+    else:
+        return [function(arg) for arg in arg_list]
 
 
 class HammingLoss(torch.nn.Module):
@@ -43,8 +68,9 @@ def main(argv):
         Args:
             weights_batch (Tensor): PyTorch tensor with shape [BATCH_SIZE, MAP_WIDTH, MAP_HEIGHT]
         """
-        weights_batch = weights_batch.detach().cpu().numpy()
-        y_batch = np.asarray([solver(- 1.0 * w) for w in list(weights_batch)])
+        weights_batch = - 1.0 * weights_batch.detach().cpu().numpy()
+        # y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+        y_batch = np.asarray(maybe_parallelize(solver, arg_list=list(weights_batch)))
         return torch.tensor(y_batch, requires_grad=False)
 
     with torch.inference_mode():
@@ -69,7 +95,7 @@ def main(argv):
 
         y_tensor = torch.tensor(y_batch.detach().cpu().numpy())
 
-        target_distribution = TargetDistribution(alpha=0.0, beta=10.0)
+        target_distribution = TargetDistribution(alpha=1.0, beta=10.0)
         noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=100)
 
         # imle_solver = imle(torch_solver,
@@ -152,15 +178,12 @@ def main(argv):
 
 
 def learning(argv):
+    set_seed(0)
+
     neighbourhood_fn = "8-grid"
     solver = get_solver(neighbourhood_fn)
 
     grid_size = [16, 16]
-
-    def show(x):
-        plt.clf()
-        sns.heatmap(x)  # , vmin=0.0, vmax=1.0)
-        plt.show()
 
     def torch_solver(weights_batch: Tensor) -> Tensor:
         r"""
@@ -173,127 +196,121 @@ def learning(argv):
         Args:
             weights_batch (Tensor): PyTorch tensor with shape [BATCH_SIZE, MAP_WIDTH, MAP_HEIGHT]
         """
-
-        # show(weights_batch[0].detach().cpu().numpy())
-        # sys.exit(0)
-
         weights_batch = - 1.0 * weights_batch.detach().cpu().numpy()
-
-        def translate_weights(weights: np.ndarray) -> np.ndarray:
-            # Weights can be negative - shift them so they are positive
-            batch_size = weights.shape[0]
-            res = (weights.T - np.minimum(np.amin(weights.reshape(batch_size, -1), axis=-1), 0).T).T
-            return res
-
-        weights_batch = translate_weights(weights_batch)
-
-        y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+        # y_batch = np.asarray([solver(w) for w in list(weights_batch)])
+        y_batch = np.asarray(maybe_parallelize(solver, arg_list=list(weights_batch)))
         return torch.tensor(y_batch, requires_grad=False)
 
-    # Gradients
+    for input_noise_temperature in [0.0, 1.0, 2.0, 5.0]:
+        for target_noise_temperature in [0.0, 1.0, 2.0, 5.0]:
+            for nb_samples in [1, 10, 100]:
+                # Gradients
+                true_weights = np.empty(shape=[1] + grid_size, dtype=float)
+                true_weights.fill(-1)
 
-    # true_weights = np.random.uniform(low=-100, high=0, size=[1] + grid_size)
+                true_weights[0, 1:6, 0:12] = -100
+                true_weights[0, 8:12, 1:] = -100
+                true_weights[0, 14:, 6:10] = -100
 
-    # true_weights = np.empty(shape=[1] + grid_size, dtype=float)
-    # true_weights.fill(-1)
+                true_y = torch_solver(torch.tensor(true_weights)).detach()
 
-    true_weights = np.empty(shape=[1] + grid_size, dtype=float)
-    true_weights.fill(-1)
+                plt.clf()
 
-    true_weights[0, 1:6, 0:12] = -100
-    true_weights[0, 8:12, 1:] = -100
-    true_weights[0, 14:, 6:10] = -100
+                sns.set_theme()
+                ax = sns.heatmap(np.copy(true_y[0].cpu().numpy()))
 
-    true_y = torch_solver(torch.tensor(true_weights)).detach()
+                ax.set_title(f'Gold path')
 
-    sns.set_theme()
-    ax = sns.heatmap(true_y[0].cpu().numpy())
+                fig = ax.get_figure()
+                fig.savefig(f"figures/gold_int={input_noise_temperature}_tnt={target_noise_temperature}_ns={nb_samples}.png")
 
-    ax.set_title(f'Gold path')
+                weights = np.random.uniform(low=-0.1, high=0.1, size=[1] + grid_size)
+                weights_tensor = torch.tensor(weights, dtype=torch.float)
+                weights_params = nn.Parameter(weights_tensor, requires_grad=True)
 
-    fig = ax.get_figure()
-    fig.savefig("figures/gold.png")
+                optimizer = torch.optim.Adam([weights_params], lr=0.005)
 
-    plt.clf()
+                evolving_weights_lst = []
+                evolving_paths_lst = []
 
-    weights = np.random.uniform(low=-0.1, high=0.1, size=[1] + grid_size)
-    weights_tensor = torch.tensor(weights, dtype=torch.float)
-    weights_params = nn.Parameter(weights_tensor, requires_grad=True)
+                loss_fn = HammingLoss()
 
-    optimizer = torch.optim.Adam([weights_params], lr=0.005)
+                for t in range(1100):
+                    target_distribution = TargetDistribution(alpha=1.0, beta=10.0)
+                    noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=100)
 
-    evolving_weights_lst = []
-    evolving_paths_lst = []
+                    @imle(target_distribution=target_distribution,
+                          noise_distribution=noise_distribution,
+                          input_noise_temperature=input_noise_temperature,
+                          target_noise_temperature=target_noise_temperature,
+                          nb_samples=nb_samples)
+                    def imle_solver(weights_batch: Tensor) -> Tensor:
+                        return torch_solver(weights_batch)
 
-    loss_fn = HammingLoss()
+                    imle_y_tensor = imle_solver(weights_params)
 
-    for t in range(1100):
-        target_distribution = TargetDistribution(alpha=1.0, beta=10.0)
-        noise_distribution = SumOfGammaNoiseDistribution(k=grid_size[0] * 1.3, nb_iterations=1)
+                    evolving_weights_lst += [np.copy(weights_params[0].detach().cpu().numpy())]
+                    evolving_paths_lst += [np.copy(imle_y_tensor[0].detach().cpu().numpy())]
 
-        @imle(target_distribution=target_distribution, noise_distribution=noise_distribution,
-              input_noise_temperature=0.1, target_noise_temperature=0.1, nb_samples=10)
-        def imle_solver(weights_batch: Tensor) -> Tensor:
-            return torch_solver(weights_batch)
+                    loss = loss_fn(imle_y_tensor, true_y)
 
-        imle_y_tensor = imle_solver(weights_params)
+                    if t % 10:
+                        print(f"Iteration: {t}\tLoss: {loss.item():.2f}")
 
-        evolving_weights_lst += [np.copy(weights_params[0].detach().cpu().numpy())]
-        evolving_paths_lst += [imle_y_tensor[0].detach().cpu().numpy()]
+                    optimizer.zero_grad()
+                    loss.backward()
 
-        loss = loss_fn(imle_y_tensor, true_y)
+                    optimizer.step()
 
-        if t % 10:
-            print(f"Iteration: {t}\tLoss: {loss.item():.2f}")
+                def init_paths():
+                    nonlocal evolving_paths_lst
+                    plt.clf()
+                    sns.set_theme()
+                    ax = sns.heatmap(evolving_paths_lst[0]) #, vmin=0.0, vmax=1.0)
+                    ax.set_title(f'Inferred path -- Input noise {input_noise_temperature}, '
+                                 f'target noise {target_noise_temperature}, iteration: {0}')
 
-        optimizer.zero_grad()
-        loss.backward()
+                def animate_paths(i):
+                    nonlocal evolving_paths_lst
+                    plt.clf()
+                    sns.set_theme()
+                    ax = sns.heatmap(evolving_paths_lst[i * 10]) #, vmin=0.0, vmax=1.0)
+                    ax.set_title(f'Inferred path -- Input noise {input_noise_temperature}, '
+                                 f'target noise {target_noise_temperature}, iteration: {i}')
 
-        optimizer.step()
+                fig = plt.figure()
+                anim = animation.FuncAnimation(fig, animate_paths, init_func=init_paths, frames=100, repeat=False)
 
-    def init_paths():
-        nonlocal evolving_paths_lst
-        plt.clf()
-        sns.set_theme()
-        ax = sns.heatmap(evolving_paths_lst[0]) #, vmin=0.0, vmax=1.0)
-        ax.set_title(f'Inferred path -- temperature 1.0, iteration: {0}')
+                anim.save(f'figures/learning_paths_int={input_noise_temperature}_tnt={target_noise_temperature}_ns={nb_samples}.gif',
+                          writer='imagemagick', fps=8)
 
-    def animate_paths(i):
-        nonlocal evolving_paths_lst
-        plt.clf()
-        sns.set_theme()
-        ax = sns.heatmap(evolving_paths_lst[i * 10]) #, vmin=0.0, vmax=1.0)
-        ax.set_title(f'Inferred path -- temperature 1.0, iteration: {i}')
+                def init_weights():
+                    nonlocal evolving_paths_lst
+                    plt.clf()
+                    sns.set_theme()
+                    ax = sns.heatmap(evolving_weights_lst[0]) #, vmin=0.0, vmax=1.0)
+                    ax.set_title(f'Inferred weights -- Input noise {input_noise_temperature}, '
+                                 f'target noise {target_noise_temperature}, iteration: {0}')
 
-    fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate_paths, init_func=init_paths, frames=100, repeat=False)
+                def animate_weights(i):
+                    nonlocal evolving_paths_lst
+                    plt.clf()
+                    sns.set_theme()
+                    ax = sns.heatmap(evolving_weights_lst[i * 10]) #, vmin=0.0, vmax=1.0)
+                    ax.set_title(f'Inferred weights -- Input noise {input_noise_temperature}, '
+                                 f'target noise {target_noise_temperature}, iteration: {i}')
 
-    anim.save('figures/learning_paths.gif', writer='imagemagick', fps=8)
+                fig = plt.figure()
+                anim = animation.FuncAnimation(fig, animate_weights, init_func=init_weights, frames=100, repeat=False)
 
-    plt.clf()
+                anim.save(f'figures/learning_weights_int={input_noise_temperature}_tnt={target_noise_temperature}_ns={nb_samples}.gif',
+                          writer='imagemagick', fps=8)
 
-    def init_weights():
-        nonlocal evolving_paths_lst
-        plt.clf()
-        sns.set_theme()
-        ax = sns.heatmap(evolving_weights_lst[0]) #, vmin=0.0, vmax=1.0)
-        ax.set_title(f'Inferred weights -- temperature 1.0, iteration: {0}')
-
-    def animate_weights(i):
-        nonlocal evolving_paths_lst
-        plt.clf()
-        sns.set_theme()
-        ax = sns.heatmap(evolving_weights_lst[i * 10]) #, vmin=0.0, vmax=1.0)
-        ax.set_title(f'Inferred weights -- temperature 1.0, iteration: {i}')
-
-    fig = plt.figure()
-    anim = animation.FuncAnimation(fig, animate_weights, init_func=init_weights, frames=100, repeat=False)
-
-    anim.save('figures/learning_weights.gif', writer='imagemagick', fps=8)
-
-    plt.clf()
+                plt.clf()
 
 
 if __name__ == '__main__':
+    ray.init(num_cpus=multiprocessing.cpu_count())
+
     main(sys.argv[1:])
     learning(sys.argv[1:])
