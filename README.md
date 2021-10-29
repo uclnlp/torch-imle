@@ -23,7 +23,7 @@ Let us assume that the optimal shortest path is the one of the left.
 Starting from random weights, the model can learn to produce the weights that will result in the optimal shortest path via Gradient Descent, by minimising the Hamming loss between the produced path and the gold path.
 Here we show the paths being produced during training (middle), and the corresponding map weights (right).
 
-<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=1.0_tnt=1.0_ns=100.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=1.0_tnt=1.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=1.0_tnt=1.0_ns=100.gif" width=260>
+<img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/gold_int=0.0_tnt=0.0_ns=1.png" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_paths_int=1.0_tnt=1.0_ns=100.gif" width=260> <img src="https://raw.githubusercontent.com/uclnlp/torch-imle/main/figures/learning_weights_int=1.0_tnt=1.0_ns=100.gif" width=260>
 
 ## Code
 
