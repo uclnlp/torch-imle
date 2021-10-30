@@ -96,6 +96,10 @@ def imle_solver(weights_batch: Tensor) -> Tensor:
     return torch_solver(weights_batch)
 ```
 
+## Papers using I-MLE
+
+- Patrick Betz, Mathias Niepert, Pasquale Minervini, and Heiner Stuckenschmidt: [Backpropagating through Markov Logic Networks](http://ceur-ws.org/Vol-2986/paper5.pdf), NeSy’20/21 @ IJCLR: 15th International Workshop on Neural-Symbolic Learning and Reasoning
+
 ## Reference
 
 ```bibtex
