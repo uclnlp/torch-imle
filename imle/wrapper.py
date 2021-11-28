@@ -25,7 +25,7 @@ def imle(function: Callable[[Tensor], Tensor] = None,
 
     The input function (solver) needs to return the solution to the problem of finding a MAP state for a constrained
     exponential family distribution -- this is the case for most black-box combinatorial solvers [2]. If this condition
-    is violated though, the result would not hold and there ismno guarantee on the validity of the obtained gradients.
+    is violated though, the result would not hold and there is no guarantee on the validity of the obtained gradients.
 
     This function can be used directly or as a decorator.
 
